@@ -14,6 +14,8 @@ $ ./run
 #include <math.h>
 #include <string.h>
 #include <fcntl.h>
+#include <immintrin.h>
+#include <assert.h>
 #if defined _WIN32
     #include "win.h"
 #else
@@ -150,9 +152,39 @@ void checkpoint_init_weights(TransformerWeights *w, Config* p, float* f, int sha
 // ----------------------------------------------------------------------------
 // neural net blocks
 
-void accum(float *a, float *b, int size) {
+void accum_avx2(float* a, float* b, int size) {
+    const int elementsPerRegister = 8; // With AVX2, 256 bits/32 per float = 8 floats
+    int i;
+
+    // Ensure a and b are 32-byte aligned
+    assert(((size_t)a % 32) == 0);
+    assert(((size_t)b % 32) == 0);
+
+    // Process chunks of 8 elements
+    for (i = 0; i <= size - elementsPerRegister; i += elementsPerRegister) {
+        __m256 vectorA = _mm256_load_ps(a + i);
+        __m256 vectorB = _mm256_load_ps(b + i);
+        __m256 sum = _mm256_add_ps(vectorA, vectorB);
+        _mm256_store_ps(a + i, sum);
+    }
+
+    // Process remaining elements
+    for (; i < size; ++i) {
+        a[i] += b[i];
+    }
+}
+
+void accum_basic(float* a, float* b, int size) {
     for (int i = 0; i < size; i++) {
         a[i] += b[i];
+    }
+}
+
+void accum(float* a, float* b, int size) {
+    if (__builtin_cpu_supports("avx2")) {
+        accum_avx2(a, b, size);
+    } else {
+        accum_basic(a, b, size);
     }
 }
 
