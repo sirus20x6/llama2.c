@@ -62,7 +62,7 @@ typedef struct {
 typedef struct {
     // current wave of activations
     float *x __attribute__((aligned(32))); // activation at current time stamp (dim,)
-    float *xb; // same, but inside a residual branch (dim,)
+    float *xb __attribute__((aligned(32))); // same, but inside a residual branch (dim,)
     float *xb2 __attribute__((aligned(32))); // an additional buffer just for convenience (dim,)
     float *hb; // buffer for hidden dimension in the ffn (hidden_dim,)
     float *hb2; // buffer for hidden dimension in the ffn (hidden_dim,)
