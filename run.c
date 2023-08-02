@@ -61,9 +61,9 @@ typedef struct {
 
 typedef struct {
     // current wave of activations
-    float *x; // activation at current time stamp (dim,)
+    float *x __attribute__((aligned(32))); // activation at current time stamp (dim,)
     float *xb; // same, but inside a residual branch (dim,)
-    float *xb2; // an additional buffer just for convenience (dim,)
+    float *xb2 __attribute__((aligned(32))); // an additional buffer just for convenience (dim,)
     float *hb; // buffer for hidden dimension in the ffn (hidden_dim,)
     float *hb2; // buffer for hidden dimension in the ffn (hidden_dim,)
     float *q; // query (dim,)
@@ -74,7 +74,7 @@ typedef struct {
     // kv cache
     float* key_cache;   // (layer, seq_len, dim)
     float* value_cache; // (layer, seq_len, dim)
-} RunState;
+} __attribute__((aligned(32))) RunState;
 
 void malloc_run_state(RunState* s, Config* p) {
     // we calloc instead of malloc to keep valgrind happy
